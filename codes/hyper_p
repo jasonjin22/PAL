@@ -1,0 +1,13 @@
+NOC:
+    epsilon = 0.01
+    delta = 0.1
+    if i >= 5:
+        state.discard()
+        state.covering()
+    random_sample_points = random.sample(self.U_t, int(np.floor(0.1 * self.space_size)))
+    def update_beta_t(self):
+        self.t += 1
+        print("t = ", self.t)
+        pi_t = (np.pi ** 2 * self.t**2) / 6
+        beta_t_tem = 2 * self.space_size * pi_t / self.delta  # m|E|pi_t/delta
+        self.beta_t = np.sqrt(2 * np.log(beta_t_tem)) / 3
