@@ -71,7 +71,7 @@ class Point(object):
             # raise Exception("The R_t is not valid")
 
     def updated_w_t(self):
-        self.w_t = self.sigma_1 ** 2 + self.sigma_2 ** 2
+        self.w_t = np.sqrt((2 * self.sigma_1) ** 2 + (2 * self.sigma_2) ** 2)
 
     def being_sampled(self, beta_t):
         self.sampled = True

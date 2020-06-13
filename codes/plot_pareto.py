@@ -100,10 +100,69 @@ def plot_pessimistic_set_and_discarded_points(training_set, pessimistic_set, dis
     plt.show()
 
 
-def plot_covered(training_set, P_t, the_point):
+def plot_covered(training_set, P_t, the_point, small_point_set):
     plt.scatter(training_set.Y[:, 0], training_set.Y[:, 1], s=10, c="blue", alpha=0.25)
     plt.scatter(P_t[1], P_t[2], s=80, c="springgreen", alpha=1, marker="^")
     plt.scatter(the_point.y[0], the_point.y[1], s=30, c="orange", alpha=1)
+    plt.scatter(small_point_set[1], small_point_set[2], s=10, c="red", alpha=1)
     plot_R_t(the_point)
     plt.show()
+
+
+def plot_pareto(Y, training_set, P_t):
+    plt.scatter(training_set.Y[:, 0], training_set.Y[:, 1], s=10, c="blue", alpha=0.25)
+    plt.scatter(P_t[1], P_t[2], s=80, c="springgreen", alpha=1, marker="^")
+    print(P_t)
+    x = P_t[1]
+    y = P_t[2]
+    nl = []
+    for i in range(len(x)):
+        nl.append((x[i], y[i]))
+    print(nl)
+    nl = sorted(nl, key=lambda x: x[1])
+    print(nl)
+    X_pareto = []
+    Y_pareto = []
+    for i in nl:
+        X_pareto.append(i[0])
+        Y_pareto.append(i[1])
+    x = [X_pareto[0], X_pareto[0]]
+    y = [Y_pareto[0]]
+    for i in X_pareto[1:]:
+        x.append(i)
+        x.append(i)
+    for i in Y_pareto:
+        y.append(i)
+        y.append(i)
+    plt.plot(x, y[:-1], color='r', alpha=0.25)
+
+    true_pareto = find_pareto(Y)
+    X_pareto = true_pareto[:, 0]
+    Y_pareto = true_pareto[:, 1]
+    x = [X_pareto[0], X_pareto[0]]
+    y = [Y_pareto[0]]
+    for i in X_pareto[1:]:
+        x.append(i)
+        x.append(i)
+    for i in Y_pareto:
+        y.append(i)
+        y.append(i)
+    plt.plot(x, y[:-1], color='green', alpha=0.25)
+
+    # plt.plot(x, y[:-1], color='r', alpha=0.25)
+    plt.show()
+
+
+def plot_error(error_list):
+    # count number of zeros
+    c = 0
+    for i in error_list:
+        if i == 0:
+            c += 1
+    x = np.arange(c, len(error_list))
+    plt.errorbar(x, error_list[c:])
+    plt.show()
+
+
+
 
