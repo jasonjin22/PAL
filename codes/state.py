@@ -4,8 +4,21 @@ import numpy as np
 
 import plot_pareto as pp
 
-sample_ratio = 0.75
+sample_ratio = 0.5
 beta_ratio = 3
+
+
+def tem(X, y1, y2):
+    X_train = X
+    ad_0 = np.zeros((X_train.shape[0], X_train.shape[1] + 1))
+    ad_0[:, :-1] = X_train
+    ad_1 = np.ones((X_train.shape[0], X_train.shape[1] + 1))
+    ad_1[:, :-1] = X_train
+    X_train_0 = ad_0
+    X_train_1 = ad_1
+    X_train_full = np.concatenate((X_train_0, X_train_1), axis=0)
+    y_train_full = np.concatenate((y1, y2), axis=0)
+    return X_train_full, y_train_full
 
 
 class State(object):
@@ -24,10 +37,11 @@ class State(object):
         self.delta = delta
         self.kernel1 = None
         self.kernel2 = None
+        self.kern = None
         self.next_point_to_sample = None
         self.error = []
 
-    def decide_hyper_para(self):
+    def decide_hyper_para_normal(self):
         self.kernel1 = GPy.kern.RBF(input_dim=self.x_dimension, variance=1., lengthscale=1.)
         self.kernel2 = GPy.kern.RBF(input_dim=self.x_dimension, variance=1., lengthscale=1.)
         random_sample_points = random.sample(self.U_t, int(np.floor(sample_ratio * self.space_size)))
@@ -42,6 +56,20 @@ class State(object):
         print("The hyper parameters are: ")
         print(self.kernel1)
         print(self.kernel2)
+
+    def decide_hyper_para_coregion(self):
+        self.kernel1 = GPy.kern.RBF(self.x_dimension, lengthscale=100)
+        self.kernel2 = GPy.kern.Coregionalize(1, output_dim=2, rank=2)
+        self.kern = self.kernel1 ** self.kernel2
+
+        random_sample_points = random.sample(self.U_t, int(np.floor(sample_ratio * self.space_size)))
+        random_sample_points_set = set(random_sample_points)
+        # print(random_sample_points_set)
+        X, y1, y2 = sampled_set_to_numpy_array(random_sample_points_set)
+
+        X_train_full, y_train_full = tem(X, y1, y2)
+        model = GPy.models.GPRegression(X_train_full, y_train_full, self.kern)
+        model.optimize()
 
     def sampling(self):
         if self.t == 1:
@@ -62,17 +90,25 @@ class State(object):
             self.next_point_to_sample = next_point_to_sample
             next_point_to_sample.being_sampled(self.beta_t)
 
-    def modeling(self):
+    def modeling(self, mode):
         # do GP regression on all the sampled points
         # change the sampled_points set to numpy array for GP regression
         X, y1, y2 = sampled_set_to_numpy_array(self.sampled_points)
         # do GP regression
-        m1 = GPy.models.GPRegression(X, y1, self.kernel1)
-        m2 = GPy.models.GPRegression(X, y2, self.kernel2)
-        # update mu_t, sigma_t
-        work_set = self.P_t.union(self.U_t)
-        for point in work_set:
-            point.update_mu_sigma(m1, m2)
+        if mode == 0:
+            m1 = GPy.models.GPRegression(X, y1, self.kernel1)
+            m2 = GPy.models.GPRegression(X, y2, self.kernel2)
+            # update mu_t, sigma_t
+            work_set = self.P_t.union(self.U_t)
+            for point in work_set:
+                point.update_mu_sigma(m1, m2)
+        elif mode == 1:
+            X_train_full, y_train_full = tem(X, y1, y2)
+            model = GPy.models.GPRegression(X_train_full, y_train_full, self.kern)
+            # update mu_t, sigma_t
+            work_set = self.P_t.union(self.U_t)
+            for point in work_set:
+                point.update_mu_sigma_coregion(model)
         # update R_t
         for point in work_set:
             point.update_R_t(self.beta_t)
@@ -134,8 +170,8 @@ class State(object):
                     if small_point.being_epsilon_dominated(point, self.epsilon):
                         discard_set_in_loop.add(small_point)
                         print("dominated by the new P_t point: ", small_point, " by ", point)
-                pp.plot_covered(self.training_set, sampled_set_to_numpy_array(self.P_t), point,
-                                sampled_set_to_numpy_array(discard_set_in_loop))
+                # pp.plot_covered(self.training_set, sampled_set_to_numpy_array(self.P_t), point,
+                #                 sampled_set_to_numpy_array(discard_set_in_loop))
                 discard_set = discard_set.union(discard_set_in_loop)
             else:
                 print("should_to_P_t: NOT")

@@ -32,6 +32,20 @@ class Point(object):
         self.mu_2 = mean2
         self.sigma_2 = np.sqrt(var2)
 
+    def update_mu_sigma_coregion(self, model):
+
+        X_test = self.x
+        X_test_0 = np.zeros((1, self.dimension+1))
+        X_test_0[:, :-1] = X_test
+        X_test_1 = np.ones((1, self.dimension+1))
+        X_test_1[:, :-1] = X_test
+        mean1, var1 = model.predict(X_test_0)
+        mean2, var2 = model.predict(X_test_1)
+        self.mu_1 = mean1
+        self.sigma_1 = np.sqrt(var1)
+        self.mu_2 = mean2
+        self.sigma_2 = np.sqrt(var2)
+
     def update_R_t(self, beta_t):
         # if not self.sampled:
         if self.sampled:

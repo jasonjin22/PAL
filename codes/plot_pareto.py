@@ -160,9 +160,24 @@ def plot_error(error_list):
         if i == 0:
             c += 1
     x = np.arange(c, len(error_list))
-    plt.errorbar(x, error_list[c:])
+    plt.errorbar(x, error_list[c:], color='slateblue')
+    plt.title("Error of the predicted Pareto frontier")
+    plt.xlabel("number of iterations")
+    plt.ylabel("error")
     plt.show()
 
-
+def plot_error_both_mode(e1, e2):
+    # count number of zeros
+    c = 0
+    for i in e1:
+        if i == 0:
+            c += 1
+    x = np.arange(c, len(e1))
+    plt.errorbar(x, e1[c:], color='orangered')
+    plt.errorbar(x, e2[c:], color='slateblue')
+    plt.title("Error of the predicted Pareto frontier")
+    plt.xlabel("number of iterations")
+    plt.ylabel("error")
+    plt.show()
 
 
